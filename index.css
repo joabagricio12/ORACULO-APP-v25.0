@@ -4,53 +4,64 @@
 
 @layer base {
   html, body {
-    @apply bg-[#010409] text-slate-100 antialiased;
+    @apply bg-[#020617] text-slate-300 antialiased selection:bg-amber-500/30;
     scrollbar-width: none; 
     -ms-overflow-style: none;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
-    /* Zoom equilibrado v25.0 Pro */
-    font-size: 120%; 
+    font-size: 110%; /* Escala compacta e profissional */
   }
 }
 
 @media (min-width: 1024px) {
-  html { font-size: 125%; }
+  html { font-size: 115%; }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* Quantum Noir Glows */
 .module-card {
-  @apply bg-slate-900/40 border border-slate-800/60 rounded-[2.5rem] shadow-2xl backdrop-blur-3xl transition-all duration-500 hover:border-amber-500/30;
+  @apply bg-slate-950/80 border border-slate-800/50 rounded-xl shadow-2xl backdrop-blur-md transition-all duration-300 hover:border-amber-500/20;
 }
 
 .module-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1rem; 
+    gap: 0.75rem; 
     width: 100%;
 }
 
-@keyframes pulse-gold {
-  0% { box-shadow: 0 0 15px rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.1); }
-  50% { box-shadow: 0 0 40px rgba(245,158,11,0.2); border-color: rgba(245,158,11,0.4); }
-  100% { box-shadow: 0 0 15px rgba(245,158,11,0.05); border-color: rgba(245,158,11,0.1); }
-}
-
-.oracle-glow {
-    animation: pulse-gold 4s infinite ease-in-out;
-}
-
+/* Efeito de Scanline de Terminal */
 .hologram-noise::before {
     content: "";
-    position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: url('https://grainy-gradients.vercel.app/noise.svg');
-    opacity: 0.04;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    background-size: 100% 2px, 3px 100%;
     pointer-events: none;
+    z-index: 9999;
+    opacity: 0.15;
 }
 
-/* Janelas de ajuste maiores para evitar erros */
-.adjustment-popover {
-    @apply w-[220px] p-5 rounded-[2rem] bg-slate-950 border border-amber-500 shadow-[0_0_60px_rgba(0,0,0,0.9)];
+@keyframes flicker {
+  0% { opacity: 0.97; }
+  5% { opacity: 0.95; }
+  10% { opacity: 0.9; }
+  15% { opacity: 0.98; }
+  25% { opacity: 0.92; }
+  30% { opacity: 0.95; }
+  100% { opacity: 1; }
+}
+
+.terminal-text {
+  animation: flicker 0.1s infinite;
+}
+
+.glow-amber {
+  text-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
 }

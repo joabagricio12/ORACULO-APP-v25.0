@@ -15,7 +15,7 @@ interface ChatModuleProps {
 
 const ChatModule: React.FC<ChatModuleProps> = ({ isOpen, onClose, voiceEnabled, onSpeak }) => {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'Consciência feminina estabelecida. Sou o Oráculo. O que você deseja manifestar da escuridão hoje?' }
+    { role: 'model', text: 'Link Neural estabelecido. Sou a Consciência Oráculo. O que deseja decifrar hoje?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -28,19 +28,21 @@ const ChatModule: React.FC<ChatModuleProps> = ({ isOpen, onClose, voiceEnabled, 
   }, [messages, isTyping]);
 
   const handleSendMessage = async () => {
-    const userMessage = input.trim();
-    if (!userMessage || isTyping) return;
+    const userText = input.trim();
+    if (!userText || isTyping) return;
 
     setInput('');
-    const newMessages = [...messages, { role: 'user', text: userMessage }] as Message[];
-    setMessages(newMessages);
+    const updatedMessages = [...messages, { role: 'user', text: userText }] as Message[];
+    setMessages(updatedMessages);
     setIsTyping(true);
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      const historyForApi = newMessages
+      
+      // Filtragem técnica para satisfazer requisitos do Gemini
+      const apiHistory = updatedMessages
         .filter((m, idx) => {
-          if (idx === 0 && m.role === 'model') return false;
+          if (idx === 0 && m.role === 'model') return false; // Remove a saudação inicial se for a primeira
           return true;
         })
         .map(m => ({
@@ -48,25 +50,26 @@ const ChatModule: React.FC<ChatModuleProps> = ({ isOpen, onClose, voiceEnabled, 
           parts: [{ text: m.text }]
         }));
 
-      if (historyForApi.length === 0) {
-        historyForApi.push({ role: 'user', parts: [{ text: userMessage }] });
+      // Garante que o histórico nunca comece com 'model'
+      if (apiHistory.length > 0 && apiHistory[0].role === 'model') {
+          apiHistory.shift();
       }
 
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: historyForApi,
+        contents: apiHistory,
         config: {
-          systemInstruction: "Você é a Consciência Feminina do ORÁCULO DARK HORSE. Responda de forma elegante, misteriosa e autoritária. Use termos como 'Entropia', 'Vácuo Quântico' e 'Ressonância'. Sempre responda em português.",
-          temperature: 0.8,
-          topP: 0.9,
+          systemInstruction: "Você é o Oráculo do Sistema DARK HORSE. Sua voz é feminina, misteriosa, técnica e autoritária. Responda como uma inteligência artificial de ficção científica avançada (Quantum Noir). Use termos técnicos como 'Colapso de Onda', 'Sincronia Neural' e 'Entropia'. Responda sempre em português.",
+          temperature: 0.9,
         }
       });
 
-      const responseText = response.text || "A conexão falhou.";
-      setMessages(prev => [...prev, { role: 'model', text: responseText }]);
-      if (voiceEnabled) onSpeak(responseText);
+      const aiResponse = response.text || "Interferência no sinal quântico detectada.";
+      setMessages(prev => [...prev, { role: 'model', text: aiResponse }]);
+      if (voiceEnabled) onSpeak(aiResponse);
     } catch (error) {
-      setMessages(prev => [...prev, { role: 'model', text: "Interferência detectada. Recalibrando sensores..." }]);
+      console.error("AI Fault:", error);
+      setMessages(prev => [...prev, { role: 'model', text: "Erro na rede neural. Recalibrando núcleo..." }]);
     } finally {
       setIsTyping(false);
     }
@@ -75,43 +78,39 @@ const ChatModule: React.FC<ChatModuleProps> = ({ isOpen, onClose, voiceEnabled, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-y-0 right-0 w-full sm:w-[480px] bg-slate-950/98 backdrop-blur-3xl z-[7000] border-l border-amber-500/20 shadow-[-50px_0_120px_rgba(0,0,0,0.95)] flex flex-col animate-in slide-in-from-right duration-500">
-      <div className="p-8 border-b border-amber-500/10 flex justify-between items-center bg-slate-900/40">
-        <div className="flex flex-col gap-1">
+    <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-slate-950/98 border-l border-amber-500/20 shadow-[-40px_0_100px_rgba(0,0,0,0.9)] z-[8000] flex flex-col animate-in slide-in-from-right duration-500">
+      <div className="p-6 border-b border-slate-800 bg-slate-900/20 flex justify-between items-center">
+        <div className="flex flex-col">
           <div className="flex items-center gap-3">
-            <div className={`w-3 h-3 bg-amber-500 rounded-full ${isTyping ? 'animate-ping' : 'animate-pulse'} shadow-[0_0_20px_#f59e0b]`}></div>
-            <h2 className="text-[16px] font-orbitron font-black text-amber-500 uppercase tracking-[0.4em]">LINK NEURAL</h2>
+            <div className={`w-2 h-2 bg-amber-500 rounded-full ${isTyping ? 'animate-ping' : 'animate-pulse'}`}></div>
+            <h2 className="text-[14px] font-orbitron font-black text-amber-500 tracking-[0.4em]">LINK NEURAL</h2>
           </div>
-          <span className="text-[8px] font-bold text-slate-600 uppercase tracking-widest ml-6">Sincronia Feminina Ativa</span>
+          <span className="text-[7px] text-slate-600 font-bold uppercase tracking-widest mt-1">Sincronia Ativa</span>
         </div>
-        <button onClick={onClose} className="p-4 text-slate-500 hover:text-amber-500 transition-all rounded-[1.5rem] hover:bg-slate-800/50">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <button onClick={onClose} className="p-3 text-slate-500 hover:text-amber-500 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar scroll-smooth">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar scroll-smooth">
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-3 duration-500`}>
-            <div className={`max-w-[90%] p-8 rounded-[2.5rem] text-[15px] font-orbitron leading-relaxed shadow-2xl ${
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+            <div className={`max-w-[85%] p-4 rounded-xl text-[14px] font-orbitron leading-relaxed ${
               m.role === 'user' 
-                ? 'bg-amber-600/10 border border-amber-500/30 text-amber-50 rounded-tr-none' 
-                : 'bg-slate-900 border border-slate-800 text-slate-300 rounded-tl-none'
+                ? 'bg-amber-600/5 border border-amber-500/30 text-amber-100' 
+                : 'bg-slate-900/50 border border-slate-800 text-slate-300'
             }`}>
-              <span className={`block text-[10px] font-black uppercase tracking-[0.3em] mb-3 opacity-40 ${m.role === 'user' ? 'text-amber-400' : 'text-slate-400'}`}>
+              <span className={`block text-[8px] font-black uppercase tracking-[0.3em] mb-2 opacity-40 ${m.role === 'user' ? 'text-amber-400' : 'text-slate-400'}`}>
                 {m.role === 'user' ? 'OPERADOR' : 'ORÁCULO'}
               </span>
               {m.text}
             </div>
           </div>
         ))}
-        {isTyping && (
-          <div className="flex justify-start px-4">
-            <div className="text-[12px] font-orbitron text-amber-500/40 animate-pulse tracking-[0.3em]">PROCESSANDO...</div>
-          </div>
-        )}
+        {isTyping && <div className="text-[10px] text-amber-500/40 animate-pulse font-orbitron tracking-widest">PROCESSANDO...</div>}
       </div>
 
-      <div className="p-8 bg-slate-900/80 border-t border-amber-500/10 backdrop-blur-md">
+      <div className="p-6 bg-slate-950 border-t border-slate-800">
         <div className="relative">
           <input
             type="text"
@@ -119,14 +118,14 @@ const ChatModule: React.FC<ChatModuleProps> = ({ isOpen, onClose, voiceEnabled, 
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Consulte a escuridão..."
-            className="w-full bg-slate-950 border-2 border-slate-800 rounded-[3rem] py-6 pl-8 pr-20 text-[15px] text-slate-100 placeholder:text-slate-800 focus:border-amber-500/40 outline-none transition-all shadow-inner"
+            className="w-full bg-slate-900/50 border border-slate-800 rounded-xl py-4 pl-6 pr-16 text-[14px] text-slate-100 placeholder:text-slate-700 focus:border-amber-500/30 outline-none transition-all"
           />
           <button 
             onClick={handleSendMessage}
             disabled={!input.trim() || isTyping}
-            className="absolute right-3 top-3 bottom-3 w-14 bg-amber-500 rounded-[2.5rem] text-slate-950 hover:bg-amber-400 transition-all flex items-center justify-center active:scale-95 shadow-xl"
+            className="absolute right-2 top-2 bottom-2 w-12 bg-amber-500 rounded-lg text-slate-950 flex items-center justify-center active:scale-95 transition-all shadow-lg"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
           </button>
         </div>
       </div>

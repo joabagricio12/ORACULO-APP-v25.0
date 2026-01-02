@@ -22,7 +22,6 @@ const App: React.FC = () => {
     const [m2, setM2] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_v25_m2') || '["","","","","","",""]'));
     const [m3, setM3] = useState<string[]>(() => JSON.parse(localStorage.getItem('dh_v25_m3') || '["","","","","","",""]'));
 
-    // Navegação Histórica do Módulo 3 (Back/Next)
     const [m3History, setM3History] = useState<string[][]>(() => [JSON.parse(localStorage.getItem('dh_v25_m3') || '["","","","","","",""]')]);
     const [m3Idx, setM3Idx] = useState(0);
 
@@ -57,9 +56,9 @@ const App: React.FC = () => {
         const msg = new SpeechSynthesisUtterance(text);
         msg.lang = 'pt-BR';
         const voices = window.speechSynthesis.getVoices();
-        const femaleVoice = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Maria') || v.name.includes('Luciana') || v.name.includes('Google português do Brasil')));
+        const femaleVoice = voices.find(v => v.lang.includes('pt-BR') && (v.name.includes('Luciana') || v.name.includes('Maria') || v.name.includes('Google português do Brasil')));
         if (femaleVoice) msg.voice = femaleVoice;
-        msg.rate = 0.9; msg.pitch = 1.2;
+        msg.rate = 1.0; msg.pitch = 1.1;
         window.speechSynthesis.speak(msg);
     }, [settings.voiceEnabled]);
 
@@ -90,26 +89,18 @@ const App: React.FC = () => {
                     }
                 }
             }
-            // Salvamento Automático no Histórico de Ajustes
             newRects.push({ id: crypto.randomUUID(), generated: gen, actual: act, type, rankLabel, timestamp: Date.now() });
         });
 
         if (newHits.length > 0) setHitsHistory(prev => [...newHits, ...prev]);
         if (newRects.length > 0) setRectificationHistory(prev => [...newRects, ...prev]);
-
-        if (newHits.some(h => h.status === 'Acerto')) {
-            speak("Ressonância absoluta. Ajustes salvos automaticamente no banco neural.");
-        } else if (newHits.some(h => h.status === 'Quase Acerto')) {
-            speak("Aproximação detectada. O Oráculo está recalibrando a matriz.");
-        } else {
-            speak("Dados assimilados. Ajustes de realidade registrados.");
-        }
+        if (newHits.length > 0) speak("Sincronia real detectada. Ajustes neurais registrados.");
     };
 
     const handleGenerate = () => {
         if (isLoading || isLocked) return;
         setIsLoading(true);
-        speak("Manifestando a matriz. Analisando correntes elite.");
+        speak("Manifestando matriz elite.");
         const parsed = parseModules([m1, m2, m3]);
         setTimeout(() => {
             const res = runGenerationCycle(parsed.modules, inputHistory, hitsHistory, rectificationHistory, settings.entropy);
@@ -119,18 +110,16 @@ const App: React.FC = () => {
             setAnalysisData(res.analysis);
             setIsLoading(false);
             setIsLocked(true); 
-            speak("Matriz prevista manifestada. Foco nos três primeiros prêmios.");
-        }, 4000);
+            speak("Matriz prevista manifestada.");
+        }, 3000);
     };
 
     const handlePasteM3 = (v: string[]) => {
         processAutoCorrection(v);
         setM1(m2); setM2(m3); setM3(v);
-        
-        const newHistory = [...m3History.slice(0, m3Idx + 1), v].slice(-50);
-        setM3History(newHistory);
-        setM3Idx(newHistory.length - 1);
-
+        const newHist = [...m3History.slice(0, m3Idx + 1), v].slice(-50);
+        setM3History(newHist);
+        setM3Idx(newHist.length - 1);
         const numericSet = v.map(line => line.split('').map(Number));
         setInputHistory(prev => [numericSet, ...prev].slice(0, 300));
         setIsLocked(false);
@@ -138,8 +127,7 @@ const App: React.FC = () => {
 
     const handleM3Undo = () => {
         if (m3Idx > 0) {
-            const prevVal = m3History[m3Idx - 1];
-            setM3(prevVal);
+            setM3(m3History[m3Idx - 1]);
             setM3Idx(m3Idx - 1);
             setIsLocked(false);
         }
@@ -147,56 +135,45 @@ const App: React.FC = () => {
 
     const handleM3Redo = () => {
         if (m3Idx < m3History.length - 1) {
-            const nextVal = m3History[m3Idx + 1];
-            setM3(nextVal);
+            setM3(m3History[m3Idx + 1]);
             setM3Idx(m3Idx + 1);
             setIsLocked(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-[#010409] px-4 pt-4 pb-20 gap-8 text-slate-100 flex flex-col overflow-y-auto no-scrollbar selection:bg-amber-500/30 font-orbitron hologram-noise relative max-w-7xl mx-auto">
+        <div className="min-h-screen bg-[#020617] px-4 pt-4 pb-16 gap-6 text-slate-400 flex flex-col overflow-y-auto no-scrollbar selection:bg-amber-500/20 font-orbitron hologram-noise relative max-w-6xl mx-auto">
             <Header onOpenHistory={() => setIsHistoryOpen(true)} onOpenChat={() => setIsChatOpen(true)} isLoading={isLoading} />
             
-            <div className="bg-slate-900/40 p-8 rounded-[3rem] border border-amber-500/10 shadow-2xl backdrop-blur-3xl oracle-glow relative overflow-hidden shrink-0">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 blur-[120px] -mr-32 -mt-32"></div>
-                <div className="flex justify-between mb-8 items-center">
+            <div className="bg-slate-950/60 p-6 rounded-2xl border border-slate-800 flex flex-col gap-4 relative overflow-hidden shrink-0">
+                <div className="flex justify-between items-center">
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.5em]">Entropia Quântica</span>
-                        <span className="text-[20px] text-amber-500 font-black uppercase tracking-widest">Nível: {(settings.entropy * 100).toFixed(0)}%</span>
+                        <span className="text-[9px] text-slate-600 font-black uppercase tracking-[0.4em]">ENTROPIA RESIDUAL</span>
+                        <span className="text-[14px] text-amber-500 font-black glow-amber uppercase tracking-widest">NÍVEL: {(settings.entropy * 100).toFixed(0)}%</span>
                     </div>
-                    <button onClick={() => setSettings({...settings, voiceEnabled: !settings.voiceEnabled})} className={`p-6 rounded-[2rem] border transition-all active:scale-90 ${settings.voiceEnabled ? 'bg-amber-500/15 border-amber-500/40 text-amber-400' : 'bg-slate-800 border-slate-700 text-slate-600'}`}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path className={settings.voiceEnabled ? "opacity-100" : "opacity-0"} d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <button onClick={() => setSettings({...settings, voiceEnabled: !settings.voiceEnabled})} className={`p-4 rounded-xl border transition-all ${settings.voiceEnabled ? 'bg-amber-500/5 border-amber-500/30 text-amber-500' : 'bg-slate-900 border-slate-800 text-slate-700'}`}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path className={settings.voiceEnabled ? "opacity-100" : "opacity-0"} d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                     </button>
                 </div>
-                <input type="range" min="0" max="1" step="0.01" value={settings.entropy} onChange={(e) => setSettings({...settings, entropy: parseFloat(e.target.value)})} className="w-full accent-amber-500 h-4 bg-slate-800 rounded-full cursor-pointer" />
+                <input type="range" min="0" max="1" step="0.01" value={settings.entropy} onChange={(e) => setSettings({...settings, entropy: parseFloat(e.target.value)})} className="w-full accent-amber-500 h-2 bg-slate-900 rounded-full cursor-pointer" />
             </div>
 
             <div className="module-grid shrink-0">
                 <ModuleInput id="1" title="CORE-A" values={m1} setValues={setM1} readOnly />
                 <ModuleInput id="2" title="CORE-B" values={m2} setValues={setM2} readOnly />
-                <ModuleInput 
-                    id="3" 
-                    title="ONDA-REAL" 
-                    values={m3} 
-                    setValues={(v) => {setM3(v); setIsLocked(false);}} 
-                    onPaste={handlePasteM3} 
-                    onUndo={handleM3Undo}
-                    onRedo={handleM3Redo}
-                    onClear={() => {setM3(Array(7).fill("")); setM3History([Array(7).fill("")]); setM3Idx(0); speak("Memória limpa.");}} 
-                />
+                <ModuleInput id="3" title="ONDA-REAL" values={m3} setValues={(v) => {setM3(v); setIsLocked(false);}} onPaste={handlePasteM3} onUndo={handleM3Undo} onRedo={handleM3Redo} onClear={() => {setM3(Array(7).fill("")); setM3History([Array(7).fill("")]); setM3Idx(0);}} />
             </div>
 
-            <button onClick={handleGenerate} disabled={isLoading || isLocked} className={`w-full py-12 font-black rounded-[4rem] uppercase tracking-[0.7em] border-2 transition-all text-[18px] relative overflow-hidden group shrink-0 ${isLoading || isLocked ? 'bg-slate-900/50 border-slate-800 text-slate-700' : 'bg-slate-950 border-amber-600 text-amber-500 shadow-[0_0_80px_rgba(245,158,11,0.3)] active:scale-95'}`}>
+            <button onClick={handleGenerate} disabled={isLoading || isLocked} className={`w-full py-8 font-black rounded-2xl uppercase tracking-[0.8em] border-2 transition-all text-[14px] relative overflow-hidden group shrink-0 ${isLoading || isLocked ? 'bg-slate-900/50 border-slate-800 text-slate-700' : 'bg-slate-950 border-amber-600/50 text-amber-500 shadow-[0_0_40px_rgba(245,158,11,0.15)] active:scale-95'}`}>
                 <div className="absolute inset-0 bg-amber-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-700"></div>
-                {isLoading ? 'ANALISANDO MATRIZ...' : isLocked ? 'MATRIZ MANIFESTADA' : 'INICIAR COLAPSO ELITE'}
+                {isLoading ? 'ANALISANDO...' : isLocked ? 'MANIFESTADA' : 'INICIAR COLAPSO'}
             </button>
 
             {isLoading ? <Loader /> : (
-                <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-8 duration-1000 flex-1">
+                <div className="flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 flex-1">
                     <StatisticsDisplay analysis={analysisData} isLoading={isLoading} />
                     <ResultDisplay result={generatedResult} onMarkHit={(v, t, p, s) => setHitsHistory(prev => [{id: crypto.randomUUID(), value: v, type: t, position: p, status: s || 'Acerto', timestamp: Date.now()}, ...prev])} onManualRectify={(g, a, t, l) => setRectificationHistory(prev => [{id: crypto.randomUUID(), generated: g, actual: a, type: t, rankLabel: l, timestamp: Date.now()}, ...prev])} />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <AdvancedPredictionDisplay predictions={advancedPredictions} onMarkHit={(v, t, p, s) => setHitsHistory(prev => [{id: crypto.randomUUID(), value: v, type: t, position: p, status: s || 'Acerto', timestamp: Date.now()}, ...prev])} onManualRectify={(g, a, t, l) => setRectificationHistory(prev => [{id: crypto.randomUUID(), generated: g, actual: a, type: t, rankLabel: l, timestamp: Date.now()}, ...prev])} />
                         <CandidateDisplay candidates={candidates} onMarkHit={(v, t, p, s) => setHitsHistory(prev => [{id: crypto.randomUUID(), value: v, type: t, position: p, status: s || 'Acerto', timestamp: Date.now()}, ...prev])} onManualRectify={(g, a, t, l) => setRectificationHistory(prev => [{id: crypto.randomUUID(), generated: g, actual: a, type: t, rankLabel: l, timestamp: Date.now()}, ...prev])} />
                     </div>
